@@ -25,7 +25,6 @@ demos = {
 action_noise = 0.5
 
 for ep_idx in range(num_episodes):
-    # gif = [observation['pixels']]
     observation, info = env.reset()
     for k, v in observation.items():
         demos['observations'][k].append(v)
@@ -44,7 +43,6 @@ for ep_idx in range(num_episodes):
         observation, reward, terminated, truncated, info = env.step(action)
         timestep += 1
         debug and env.render()
-        # gif.append(observation['pixels'])
         eef_pos = env.unwrapped.eef
         for k, v in observation.items():
             demos['observations'][k].append(v)
@@ -64,7 +62,6 @@ for ep_idx in range(num_episodes):
         observation, reward, terminated, truncated, info = env.step(action)
         timestep += 1
         debug and env.render()
-        # gif.append(observation['pixels'])
         eef_pos = env.unwrapped.eef
         for k, v in observation.items():
             demos['observations'][k].append(v)
