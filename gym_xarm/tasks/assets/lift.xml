@@ -23,7 +23,7 @@
 		</body>
 
 		<body pos="1.5 0.075 0.3425" name="table0">
-			<geom name="tablegeom0" size="0.3 0.6 0.2" pos="0 0 0" type="box" material="table_mat" density="2000" friction="1 1 1"></geom>
+			<geom name="tablegeom0" size="0.3 0.6 0.2" pos="0 0 0" type="box" material="grid" density="2000" friction="1 1 1"></geom>
 		</body>
 
 		<body name="object" pos="1.405 0.3 0.58625">

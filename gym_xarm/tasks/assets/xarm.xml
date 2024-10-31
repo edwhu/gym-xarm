@@ -35,6 +35,7 @@
                                 <body name="link7" pos="0.076 0.097 0" quat="0.707105 -0.707108 0 0">
                                     <inertial pos="-0.000420033 -0.00287433 0.0257078" quat="0.999372 -0.0349129 -0.00605634 0.000551744" mass="0.85624" diaginertia="0.00137671 0.00118744 0.000514968" />
                                     <joint name="joint7" pos="0 0 0" axis="0 0 1" limited="true" range="-6.28319 6.28319" damping="2" frictionloss="1" />
+                                    <!-- <camera fovy="60" name="camera0" pos="0.05 0 0" euler="0 3.1415 1.57" /> -->
                                     <geom name="j8" material="robot0:gripper_mat" type="mesh" rgba="0.753 0.753 0.753 1" mesh="link7" />
                                     <geom name="j9" material="robot0:gripper_mat" type="mesh" rgba="1 1 1 1" mesh="base_link" />
                                     <site name="grasp" pos="0 0 0.16" rgba="1 0 0 0" type="sphere" size="0.01" group="1"/>

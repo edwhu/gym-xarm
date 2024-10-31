@@ -2,7 +2,8 @@
     <asset>
         <texture type="skybox" builtin="gradient" rgb1="0.0 0.0 0.0" rgb2="0.0 0.0 0.0" width="32" height="32"></texture>
         <material name="floor_mat" specular="0" shininess="0.0" reflectance="0" rgba="0.043 0.055 0.051 1"></material>
-
+        <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300" mark="edge" markrgb=".2 .3 .4"/>
+        <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
         <material name="table_mat" specular="0.2" shininess="0.2" reflectance="0" rgba="1 1 1 1"></material>
         <material name="pedestal_mat" specular="0.35" shininess="0.5" reflectance="0" rgba="0.705 0.585 0.405 1"></material>
         <material name="block_mat" specular="0.5" shininess="0.9" reflectance="0.05" rgba="0.373 0.678 0.627 1"></material>

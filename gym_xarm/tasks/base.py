@@ -68,8 +68,10 @@ class Base(gym.Env):
 
         # Initialize sim, spaces & renderers
         self._initialize_simulation()
-        self.observation_renderer = self._initialize_renderer(renderer_type="observation")
-        self.visualization_renderer = self._initialize_renderer(renderer_type="visualization")
+        obs_renderer_kwargs = {"camera_name": "camera0", "width": self.observation_width, "height": self.observation_height}
+        vis_renderer_kwargs = {"camera_name": "camera0", "width": self.visualization_width, "height": self.visualization_width}
+        self.observation_renderer = self._initialize_renderer(renderer_type="observation", renderer_kwargs=obs_renderer_kwargs)
+        self.visualization_renderer = self._initialize_renderer(renderer_type="visualization", renderer_kwargs=vis_renderer_kwargs)
         self.observation_space = self._initialize_observation_space()
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(len(self.metadata["action_space"]),))
         self.action_padding = np.zeros(4 - len(self.metadata["action_space"]), dtype=np.float32)
@@ -123,6 +125,13 @@ class Base(gym.Env):
                     ),
                 }
             )
+        elif self.obs_type == "pixels_state":
+            observation_space = gym.spaces.Dict(
+                {
+                    "pixels": gym.spaces.Box(low=0, high=255, shape=image_shape, dtype=np.uint8),
+                    "state":  gym.spaces.Box(-1000.0, 1000.0, shape=obs['state'].shape, dtype=np.float64),
+                }
+            )
         else:
             raise ValueError(
                 f"Unknown obs_type {self.obs_type}. Must be one of [pixels, state, pixels_agent_pos]"
@@ -130,7 +139,7 @@ class Base(gym.Env):
 
         return observation_space
 
-    def _initialize_renderer(self, renderer_type: str):
+    def _initialize_renderer(self, renderer_type: str, renderer_kwargs: dict = {}):
         if renderer_type == "observation":
             model = self.model
         elif renderer_type == "visualization":
@@ -147,7 +156,7 @@ class Base(gym.Env):
                 f"Unknown render type {renderer_type}. Must be one of [observation, visualization]"
             )
 
-        return MujocoRenderer(model, self.data)
+        return MujocoRenderer(model, self.data, **renderer_kwargs)
 
     @property
     def dt(self):
@@ -253,6 +262,11 @@ class Base(gym.Env):
                 "pixels": pixels,
                 "agent_pos": self.robot_state,
             }
+        elif self.obs_type == "pixels_state":
+            return {
+                "pixels": pixels,
+                "state": self._get_obs(),
+            }
         else:
             raise ValueError(
                 f"Unknown obs_type {self.obs_type}. Must be one of [pixels, state, pixels_agent_pos]"
@@ -262,7 +276,7 @@ class Base(gym.Env):
         assert action.shape == (4,)
         assert self.action_space.contains(action), f"{action!r} ({type(action)}) invalid"
         self._apply_action(action)
-        self._mujoco.mj_step(self.model, self.data, nstep=2)
+        self._mujoco.mj_step(self.model, self.data, nstep=20)
         self._step_callback()
         observation = self.get_obs()
         reward = self.get_reward()
@@ -317,7 +331,7 @@ class Base(gym.Env):
 
     def _render(self, renderer: MujocoRenderer):
         self._render_callback()
-        render = renderer.render(self.render_mode, camera_name="camera0")
+        render = renderer.render(self.render_mode)
         return render.copy() if render is not None else None
 
     def _render_callback(self):

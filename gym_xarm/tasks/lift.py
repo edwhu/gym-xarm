@@ -12,15 +12,43 @@ class Lift(Base):
     }
 
     def __init__(self, **kwargs):
-        self._z_threshold = 0.15
+        self._z_threshold = 0.2
         super().__init__("lift", **kwargs)
+
+    def _initialize_simulation(self):
+        """Initialize MuJoCo simulation data structures mjModel and mjData."""
+        self.model = self._mujoco.MjModel.from_xml_path(self.xml_path)
+        self.data = self._mujoco.MjData(self.model)
+
+        # make table rainbow shaped.
+        l = len(self.model.tex_type)
+        for i in range(l):
+            if self.model.tex_type[i] == 0:
+                height = self.model.tex_height[i]
+                width = self.model.tex_width[i]
+                s = self.model.tex_adr[i]
+                for x in range(height):
+                    for y in range(width):
+                        cur_s = s + (x * width + y) * 3
+                        self.model.tex_data[cur_s:cur_s + 3] = [int(x / height * 255), int(y / width * 255), 128]
+        self.model.mat_texrepeat[:, :] = 1
+        self._model_names = self._utils.MujocoModelNames(self.model)
+
+        self.model.vis.global_.offwidth = self.observation_width
+        self.model.vis.global_.offheight = self.observation_height
+
+        self._env_setup(initial_qpos=self.initial_qpos)
+        self.initial_time = self.data.time
+        self.initial_qpos = np.copy(self.data.qpos)
+        self.initial_qvel = np.copy(self.data.qvel)
 
     @property
     def z_target(self):
-        return self._init_z + self._z_threshold
+        return self._init_z + self._z_threshold - self.center_of_table[2]
 
     def is_success(self):
-        return self.obj[2] >= self.z_target
+        # print(self.obj[2], self.z_target)
+        return self.obj[2] >= (self.z_target)
 
     def get_reward(self):
         reach_dist = np.linalg.norm(self.obj - self.eef)
@@ -40,11 +68,11 @@ class Lift(Base):
         # Pick
         if pick_completed and not obj_dropped:
             pick_reward = self.z_target
-        elif (reach_dist < 0.1) and (self.obj[2] > (self._init_z + 0.005)):
+        elif (reach_dist < 0.1) and (self.obj[2] > (self._init_z - self.center_of_table[2] + 0.005)):
             pick_reward = min(self.z_target, self.obj[2])
         else:
             pick_reward = 0
-
+        # print('picked', pick_completed, 'dropped', obj_dropped, 'reach', reach_reward, 'pick', pick_reward)
         return reach_reward / 100 + pick_reward
 
     def _get_obs(self):
