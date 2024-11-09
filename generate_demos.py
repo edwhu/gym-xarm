@@ -10,11 +10,11 @@ env = gym.make("gym_xarm/PrivilegedXarmLift-v0", render_mode=render_mode)
 
 demos = {
     'observations': {
-        'pixels': [],
+        'rgb': [],
         'state': []
     },
     'next_observations': {
-        'pixels': [],
+        'rgb': [],
         'state': []
     },
     'actions': [],
@@ -22,7 +22,9 @@ demos = {
     'dones': [],
 }
 
-action_noise = 0.5
+pos_action_noise = 0.75
+episodic_return = []
+episodic_success = []
 
 for ep_idx in range(num_episodes):
     observation, info = env.reset()
@@ -30,17 +32,19 @@ for ep_idx in range(num_episodes):
         demos['observations'][k].append(v)
     debug and env.render()
     timestep = 0
+    episodic_return.append(0)
 
     # first approach a point over the object.
     goal_pos = env.unwrapped.obj + np.array([0.0, 0, 0.1])
     eef_pos = env.unwrapped.eef
     while np.linalg.norm(eef_pos - goal_pos) > 0.025:
         pos_diff = (goal_pos - eef_pos) * 10
-        pos_diff += np.random.normal(0, action_noise, size=pos_diff.shape)
+        pos_diff += np.random.normal(0, pos_action_noise, size=pos_diff.shape)
         pos_diff =  np.clip(pos_diff, -1, 1)
         gripper_angle = -1.0
         action = np.concatenate([pos_diff, [gripper_angle]]).astype(np.float32)
         observation, reward, terminated, truncated, info = env.step(action)
+        episodic_return[-1] += reward
         timestep += 1
         debug and env.render()
         eef_pos = env.unwrapped.eef
@@ -55,11 +59,15 @@ for ep_idx in range(num_episodes):
     eef_pos = env.unwrapped.eef
     while np.linalg.norm(eef_pos - goal_pos) > 0.025:
         pos_diff = (goal_pos - eef_pos) * 10
-        pos_diff += np.random.normal(0, action_noise, size=pos_diff.shape)
+        pos_diff += np.random.normal(0, pos_action_noise, size=pos_diff.shape)
         pos_diff =  np.clip(pos_diff, -1, 1)
         gripper_angle = -1.0
+        # with low probability, flip the gripper
+        if np.random.rand() < 0.1:
+            action[-1] *= -1.0
         action = np.concatenate([pos_diff, [gripper_angle]]).astype(np.float32)
         observation, reward, terminated, truncated, info = env.step(action)
+        episodic_return[-1] += reward
         timestep += 1
         debug and env.render()
         eef_pos = env.unwrapped.eef
@@ -72,7 +80,11 @@ for ep_idx in range(num_episodes):
     # close the gripper
     for _ in range(10):
         action = np.array([0, 0, 0, 1.0], dtype=np.float32)
+        # with low probability, flip the gripper
+        if np.random.rand() < 0.1:
+            action[-1] *= -1.0
         observation, reward, terminated, truncated, info = env.step(action)
+        episodic_return[-1] += reward
         timestep += 1
         debug and env.render()
         for k, v in observation.items():
@@ -84,7 +96,11 @@ for ep_idx in range(num_episodes):
     # lift the object up
     for i in range(100):
         action = np.array([0, 0, 1.0, 1.0], dtype=np.float32)
+        # with low probability, flip the gripper
+        if np.random.rand() < 0.1:
+            action[-1] *= -1.0
         observation, reward, terminated, truncated, info = env.step(action)
+        episodic_return[-1] += reward
         timestep += 1
         debug and env.render()
         for k, v in observation.items():
@@ -94,6 +110,7 @@ for ep_idx in range(num_episodes):
         demos['dones'].append(terminated or truncated)
         if terminated or truncated:
             print(f'Episode {ep_idx + 1} took {timestep} actions, success', info['is_success'])
+            episodic_success.append(info['is_success'])
             break
     
     for k, v in demos['observations'].items():
@@ -118,7 +135,22 @@ for k, v in demos.items():
     else:
         print(k, v.shape)
 
+print('\nstatistics:')
+print('success', np.mean(episodic_success))
+print('return_avg', np.mean(episodic_return))
+print('return_min', np.min(episodic_return))
+print('return_max', np.max(episodic_return))
+
+# save the statistics into a metadata dict
+metadata = {
+    'success': np.mean(episodic_success),
+    'return_avg': np.mean(episodic_return),
+    'return_min': np.min(episodic_return),
+    'return_max': np.max(episodic_return),
+}
+demos['metadata'] = metadata
+
 # store as a pickle file.
 import pickle 
-with open('gym_xarm_lift_demos.pkl', 'wb') as f:
+with open('buffer.pkl', 'wb') as f:
     pickle.dump(demos, f)

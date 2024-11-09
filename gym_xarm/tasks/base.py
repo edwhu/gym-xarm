@@ -40,8 +40,8 @@ class Base(gym.Env):
         gripper_rotation=None,
         observation_width=84,
         observation_height=84,
-        visualization_width=680,
-        visualization_height=680,
+        visualization_width=256,
+        visualization_height=256,
     ):
         # Coordinates
         if gripper_rotation is None:
@@ -68,10 +68,7 @@ class Base(gym.Env):
 
         # Initialize sim, spaces & renderers
         self._initialize_simulation()
-        obs_renderer_kwargs = {"camera_name": "camera0", "width": self.observation_width, "height": self.observation_height}
-        vis_renderer_kwargs = {"camera_name": "camera0", "width": self.visualization_width, "height": self.visualization_width}
-        self.observation_renderer = self._initialize_renderer(renderer_type="observation", renderer_kwargs=obs_renderer_kwargs)
-        self.visualization_renderer = self._initialize_renderer(renderer_type="visualization", renderer_kwargs=vis_renderer_kwargs)
+        self._initialize_rendering()
         self.observation_space = self._initialize_observation_space()
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(len(self.metadata["action_space"]),))
         self.action_padding = np.zeros(4 - len(self.metadata["action_space"]), dtype=np.float32)
@@ -96,6 +93,12 @@ class Base(gym.Env):
         self.initial_time = self.data.time
         self.initial_qpos = np.copy(self.data.qpos)
         self.initial_qvel = np.copy(self.data.qvel)
+
+    def _initialize_rendering(self):
+        obs_renderer_kwargs = {"camera_name": "camera0", "width": self.observation_width, "height": self.observation_height}
+        vis_renderer_kwargs = {"camera_name": "camera0", "width": self.visualization_width, "height": self.visualization_width}
+        self.observation_renderer = self._initialize_renderer(renderer_type="observation", renderer_kwargs=obs_renderer_kwargs)
+        self.visualization_renderer = self._initialize_renderer(renderer_type="visualization", renderer_kwargs=vis_renderer_kwargs)
 
     def _env_setup(self, initial_qpos):
         """Initial configuration of the environment.
@@ -128,7 +131,7 @@ class Base(gym.Env):
         elif self.obs_type == "pixels_state":
             observation_space = gym.spaces.Dict(
                 {
-                    "pixels": gym.spaces.Box(low=0, high=255, shape=image_shape, dtype=np.uint8),
+                    "rgb": gym.spaces.Box(low=0, high=255, shape=image_shape, dtype=np.uint8),
                     "state":  gym.spaces.Box(-1000.0, 1000.0, shape=obs['state'].shape, dtype=np.float64),
                 }
             )
@@ -264,7 +267,7 @@ class Base(gym.Env):
             }
         elif self.obs_type == "pixels_state":
             return {
-                "pixels": pixels,
+                "rgb": pixels,
                 "state": self._get_obs(),
             }
         else:
