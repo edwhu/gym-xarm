@@ -53,6 +53,16 @@ for ep_idx in range(num_episodes):
         demos['actions'].append(action)
         demos['rewards'].append(reward)
         demos['dones'].append(terminated or truncated)
+        if terminated or truncated:
+            print(f'Episode {ep_idx + 1} took {timestep} actions, success', info['is_success'])
+            episodic_success.append(info['is_success'])
+            break
+
+    if terminated or truncated:
+        for k, v in demos['observations'].items():
+            demos['observations'][k] = v[:-1]
+            demos['next_observations'][k] = v[1:]
+        continue
 
     # go down to the object
     goal_pos = env.unwrapped.obj
@@ -76,6 +86,16 @@ for ep_idx in range(num_episodes):
         demos['actions'].append(action)
         demos['rewards'].append(reward)
         demos['dones'].append(terminated or truncated)
+        if terminated or truncated:
+            print(f'Episode {ep_idx + 1} took {timestep} actions, success', info['is_success'])
+            episodic_success.append(info['is_success'])
+            break
+
+    if terminated or truncated:
+        for k, v in demos['observations'].items():
+            demos['observations'][k] = v[:-1]
+            demos['next_observations'][k] = v[1:]
+        continue
 
     # close the gripper
     for _ in range(10):
@@ -92,6 +112,16 @@ for ep_idx in range(num_episodes):
         demos['actions'].append(action)
         demos['rewards'].append(reward)
         demos['dones'].append(terminated or truncated)
+        if terminated or truncated:
+            print(f'Episode {ep_idx + 1} took {timestep} actions, success', info['is_success'])
+            episodic_success.append(info['is_success'])
+            break
+
+    if terminated or truncated:
+        for k, v in demos['observations'].items():
+            demos['observations'][k] = v[:-1]
+            demos['next_observations'][k] = v[1:]
+        continue
 
     # lift the object up
     for i in range(100):
@@ -113,9 +143,11 @@ for ep_idx in range(num_episodes):
             episodic_success.append(info['is_success'])
             break
     
-    for k, v in demos['observations'].items():
-        demos['observations'][k] = v[:-1]
-        demos['next_observations'][k] = v[1:]
+    if terminated or truncated:
+        for k, v in demos['observations'].items():
+            demos['observations'][k] = v[:-1]
+            demos['next_observations'][k] = v[1:]
+        continue
 
 env.close()
 
@@ -149,6 +181,10 @@ metadata = {
     'return_max': np.max(episodic_return),
 }
 demos['metadata'] = metadata
+# imageio.mimwrite(os.path.join(demo_folder, 'demos.mp4'), demos[0]['observations']['rgb'][:1000], fps=5)
+# save a video for debug
+imageio.mimwrite('demos.mp4', demos['observations']['rgb'][:1000], fps=15)
+
 
 # store as a pickle file.
 import pickle 

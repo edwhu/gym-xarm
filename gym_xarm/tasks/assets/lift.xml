@@ -38,7 +38,7 @@
         <light pos="0 0 2" dir="0.2 0.2 -0.8" directional="true"  diffuse="0.3 0.3 0.3"  castshadow="false" name="light3"></light>
 
 		<camera fovy="50" name="camera0" pos="0.9559 1.0 1.1" euler="-1.1 -0.6 3.4" />
-		<camera fovy="1" name="top_camera" pos="1.5 0.5 1.75" euler="0 0 -1.57" orthographic="true"/>
+		<camera fovy="1" name="top_camera" pos="1.5 0.5 1.75" euler="0 0 -1.57"/>
 	</worldbody>
 
 	<equality>

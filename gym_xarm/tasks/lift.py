@@ -34,10 +34,10 @@ class Lift(Base):
         self.model.mat_texrepeat[:, :] = 1
 
         # make robot transparent
-        robot_geom_names = ['bb', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6', 'j8', 'j9', 'right_outer_knuckle', 'right_inner_knuckle', 'left_outer_knuckle', 'left_inner_knuckle']
-        for g in robot_geom_names:
-            geom_id = self.model.geom(g).id
-            self.model.geom_rgba[geom_id][3] = 0.0
+        # robot_geom_names = ['bb', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6', 'j8', 'j9', 'right_outer_knuckle', 'right_inner_knuckle', 'left_outer_knuckle', 'left_inner_knuckle']
+        # for g in robot_geom_names:
+        #     geom_id = self.model.geom(g).id
+        #     self.model.geom_rgba[geom_id][3] = 0.0
 
         self._model_names = self._utils.MujocoModelNames(self.model)
 
